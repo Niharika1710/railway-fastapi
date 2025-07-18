@@ -1,7 +1,7 @@
 import os
 
 DATABASE_URL = os.getenv("postgresql://postgres:rZeiafNLJxTNpZQlrinOfcAWnnFzQuOh@metro.proxy.rlwy.net:29641/railway")
-print("DATABASE_URL:", DATABASE_URL)  # Add this line
+print("DATABASE_URL:", repr(DATABASE_URL))  # <- add this line
 
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
