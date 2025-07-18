@@ -26,6 +26,7 @@ def create_item(name: str, description: str, db: Session = Depends(get_db)):
 def read_items(db: Session = Depends(get_db)):
     items = db.query(models.Item).all()
     return items
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
