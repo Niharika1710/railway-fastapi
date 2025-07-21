@@ -1,10 +1,10 @@
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
 from sqlalchemy.orm import Session
 import models
-from database import engine, SessionLocal
+from database import SessionLocal, engine
 
-from models import Base
-Base.metadata.create_all(bind=engine)
+models.Base.metadata.create_all(bind=engine)
+
 app = FastAPI()
 
 def get_db():
@@ -14,22 +14,32 @@ def get_db():
     finally:
         db.close()
 
-@app.post("/items/")
-def create_item(name: str, description: str, db: Session = Depends(get_db)):
-    db_item = models.Item(name=name, description=description)
-    db.add(db_item)
+@app.post("/api/forms/wheel-specifications")
+def create_wheel_specification(
+    formNumber: str,
+    submittedBy: str,
+    submittedDate: str,
+    condemningDia: str,
+    lastShopIssueSize: str,
+    treadDiameterNew: str,
+    wheelGauge: str,
+    db: Session = Depends(get_db)
+):
+    spec = models.WheelSpecification(
+        formNumber=formNumber,
+        submittedBy=submittedBy,
+        submittedDate=submittedDate,
+        condemningDia=condemningDia,
+        lastShopIssueSize=lastShopIssueSize,
+        treadDiameterNew=treadDiameterNew,
+        wheelGauge=wheelGauge
+    )
+    db.add(spec)
     db.commit()
-    db.refresh(db_item)
-    return db_item
-
-@app.get("/items/")
-def read_items(db: Session = Depends(get_db)):
-    items = db.query(models.Item).all()
-    return items
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
-@app.get("/")
-def read_root():
-    return {"message": "Hello, Railway FastAPI is live!"}
+    db.refresh(spec)
+    return {"success": True, "message": "Wheel specification submitted successfully.", "data": {
+        "formNumber": spec.formNumber,
+        "status": "Saved",
+        "submittedBy": spec.submittedBy,
+        "submittedDate": spec.submittedDate
+    }}
