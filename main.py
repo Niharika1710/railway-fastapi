@@ -1,13 +1,16 @@
-from fastapi import FastAPI, HTTPException, Depends
-from pydantic import BaseModel
+from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
 import models
-from database import SessionLocal, engine
+from database import engine, SessionLocal
+from pydantic import BaseModel
+from typing import Dict
 
+# Create tables
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
+# Dependency
 def get_db():
     db = SessionLocal()
     try:
@@ -15,63 +18,36 @@ def get_db():
     finally:
         db.close()
 
-# Pydantic model for request validation
-class Fields(BaseModel):
-    treadDiameterNew: str
-    lastShopIssueSize: str
-    condemningDia: str
-    wheelGauge: str
-    variationSameAxle: str
-    variationSameBogie: str
-    variationSameCoach: str
-    wheelProfile: str
-    intermediateWWP: str
-    bearingSeatDiameter: str
-    rollerBearingOuterDia: str
-    rollerBearingBoreDia: str
-    rollerBearingWidth: str
-    axleBoxHousingBoreDia: str
-    wheelDiscWidth: str
-
-class WheelSpecRequest(BaseModel):
+# Pydantic Schema for Request Body
+class WheelSpecificationCreate(BaseModel):
     formNumber: str
     submittedBy: str
     submittedDate: str
-    fields: Fields
+    fields: Dict[str, str]
 
 @app.post("/api/forms/wheel-specifications")
-def create_wheel_specification(request: WheelSpecRequest, db: Session = Depends(get_db)):
-    data = request
-    spec = models.WheelSpecification(
+def create_wheel_specification(data: WheelSpecificationCreate, db: Session = Depends(get_db)):
+    db_item = models.WheelSpecification(
         formNumber=data.formNumber,
         submittedBy=data.submittedBy,
         submittedDate=data.submittedDate,
-        treadDiameterNew=data.fields.treadDiameterNew,
-        lastShopIssueSize=data.fields.lastShopIssueSize,
-        condemningDia=data.fields.condemningDia,
-        wheelGauge=data.fields.wheelGauge,
-        variationSameAxle=data.fields.variationSameAxle,
-        variationSameBogie=data.fields.variationSameBogie,
-        variationSameCoach=data.fields.variationSameCoach,
-        wheelProfile=data.fields.wheelProfile,
-        intermediateWWP=data.fields.intermediateWWP,
-        bearingSeatDiameter=data.fields.bearingSeatDiameter,
-        rollerBearingOuterDia=data.fields.rollerBearingOuterDia,
-        rollerBearingBoreDia=data.fields.rollerBearingBoreDia,
-        rollerBearingWidth=data.fields.rollerBearingWidth,
-        axleBoxHousingBoreDia=data.fields.axleBoxHousingBoreDia,
-        wheelDiscWidth=data.fields.wheelDiscWidth
+        fields=data.fields
     )
-    db.add(spec)
+    db.add(db_item)
     db.commit()
-    db.refresh(spec)
+    db.refresh(db_item)
     return {
         "success": True,
         "message": "Wheel specification submitted successfully.",
         "data": {
-            "formNumber": spec.formNumber,
-            "status": "Saved",
-            "submittedBy": spec.submittedBy,
-            "submittedDate": spec.submittedDate
+            "formNumber": db_item.formNumber,
+            "submittedBy": db_item.submittedBy,
+            "submittedDate": db_item.submittedDate,
+            "status": "Saved"
         }
     }
+
+# Health check (optional)
+@app.get("/")
+def read_root():
+    return {"message": "API is live for wheel specifications"}
