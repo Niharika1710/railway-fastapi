@@ -1,9 +1,11 @@
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, Date, JSON
 from database import Base
 
-class Item(Base):
-    __tablename__ = "items"
+class WheelSpecification(Base):
+    __tablename__ = "wheel_specifications"
 
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, index=True)
-    description = Column(String, index=True)
+    formNumber = Column(String, unique=True, index=True, nullable=False)
+    submittedBy = Column(String, nullable=False)
+    submittedDate = Column(Date, nullable=False)
+    fields = Column(JSON, nullable=False)
