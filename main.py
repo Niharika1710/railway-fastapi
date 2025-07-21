@@ -1,16 +1,12 @@
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
 from sqlalchemy.orm import Session
 import models
-from database import engine, SessionLocal
-from pydantic import BaseModel
-from typing import Dict
+from database import SessionLocal, engine
 
-# Create tables
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
-# Dependency
 def get_db():
     db = SessionLocal()
     try:
@@ -18,36 +14,32 @@ def get_db():
     finally:
         db.close()
 
-# Pydantic Schema for Request Body
-class WheelSpecificationCreate(BaseModel):
-    formNumber: str
-    submittedBy: str
-    submittedDate: str
-    fields: Dict[str, str]
-
 @app.post("/api/forms/wheel-specifications")
-def create_wheel_specification(data: WheelSpecificationCreate, db: Session = Depends(get_db)):
-    db_item = models.WheelSpecification(
-        formNumber=data.formNumber,
-        submittedBy=data.submittedBy,
-        submittedDate=data.submittedDate,
-        fields=data.fields
+def create_wheel_specification(
+    formNumber: str,
+    submittedBy: str,
+    submittedDate: str,
+    condemningDia: str,
+    lastShopIssueSize: str,
+    treadDiameterNew: str,
+    wheelGauge: str,
+    db: Session = Depends(get_db)
+):
+    spec = models.WheelSpecification(
+        formNumber=formNumber,
+        submittedBy=submittedBy,
+        submittedDate=submittedDate,
+        condemningDia=condemningDia,
+        lastShopIssueSize=lastShopIssueSize,
+        treadDiameterNew=treadDiameterNew,
+        wheelGauge=wheelGauge
     )
-    db.add(db_item)
+    db.add(spec)
     db.commit()
-    db.refresh(db_item)
-    return {
-        "success": True,
-        "message": "Wheel specification submitted successfully.",
-        "data": {
-            "formNumber": db_item.formNumber,
-            "submittedBy": db_item.submittedBy,
-            "submittedDate": db_item.submittedDate,
-            "status": "Saved"
-        }
-    }
-
-# Health check (optional)
-@app.get("/")
-def read_root():
-    return {"message": "API is live for wheel specifications"}
+    db.refresh(spec)
+    return {"success": True, "message": "Wheel specification submitted successfully.", "data": {
+        "formNumber": spec.formNumber,
+        "status": "Saved",
+        "submittedBy": spec.submittedBy,
+        "submittedDate": spec.submittedDate
+    }}
