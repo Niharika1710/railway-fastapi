@@ -173,13 +173,3 @@ Test POST and GET APIs directly using the Swagger interface.
 ✅ This implementation demonstrates functionality for **backend assessment with FastAPI and PostgreSQL** and is ready for integration with the provided frontend.
 
 ---
-
-## ✅ Next
-
-Once added:
-- Commit this `README.md` to your repository.
-- Record your screen demonstration.
-- Prepare your submission with:
-  - GitHub repository or zipped source code
-  - Updated Postman collection with working APIs
-  - Screen recording link
