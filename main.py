@@ -1,5 +1,6 @@
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, Query
 from sqlalchemy.orm import Session
+from typing import Optional
 import models
 from database import SessionLocal, engine
 
@@ -14,35 +15,38 @@ def get_db():
     finally:
         db.close()
 
-@app.post("/api/forms/wheel-specifications")
-def create_wheel_specification(
-    formNumber: str,
-    submittedBy: str,
-    submittedDate: str,
-    condemningDia: str,
-    lastShopIssueSize: str,
-    treadDiameterNew: str,
-    wheelGauge: str,
+@app.get("/api/forms/wheel-specifications")
+def get_wheel_specifications(
+    formNumber: Optional[str] = Query(None),
+    submittedBy: Optional[str] = Query(None),
+    submittedDate: Optional[str] = Query(None),
     db: Session = Depends(get_db)
 ):
-    spec = models.WheelSpecification(
-        formNumber=formNumber,
-        submittedBy=submittedBy,
-        submittedDate=submittedDate,
-        condemningDia=condemningDia,
-        lastShopIssueSize=lastShopIssueSize,
-        treadDiameterNew=treadDiameterNew,
-        wheelGauge=wheelGauge
-    )
-    db.add(spec)
-    db.commit()
-    db.refresh(spec)
-    return {"success": True, "message": "Wheel specification submitted successfully.", "data": {
-        "formNumber": spec.formNumber,
-        "status": "Saved",
-        "submittedBy": spec.submittedBy,
-        "submittedDate": spec.submittedDate
-    }}
+    query = db.query(models.WheelSpecification)
+
+    if formNumber:
+        query = query.filter(models.WheelSpecification.formNumber == formNumber)
+    if submittedBy:
+        query = query.filter(models.WheelSpecification.submittedBy == submittedBy)
+    if submittedDate:
+        query = query.filter(models.WheelSpecification.submittedDate == submittedDate)
+
+    results = query.all()
+    data = []
+    for item in results:
+        data.append({
+            "formNumber": item.formNumber,
+            "submittedBy": item.submittedBy,
+            "submittedDate": item.submittedDate,
+            "fields": item.fields
+        })
+
+    return {
+        "success": True,
+        "message": "Filtered wheel specification forms fetched successfully.",
+        "data": data
+    }
+
 
 if __name__ == "__main__":
     import uvicorn
